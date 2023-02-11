@@ -10,7 +10,24 @@ const Enfermeiro = mongoose.model('Enfermeiro', new Schema({
    age: {
     type: Number,
     required: true
-   }
+   },
+   experience: {
+    type: Number,
+    required: true
+   },
+   gender: {
+    type: String,
+    required: true
+   },
+   images: {
+    type: Array,
+    required: true
+   },
+   available: {
+    type: Boolean
+   },
+   user: Object,
+   adopter: Object
 }, {timestamps: true}))
 
 module.exports = Enfermeiro;
