@@ -1,6 +1,9 @@
 //importações
 const User = require('../models/User')
 const bcrypt = require('bcrypt')
+const validarEmail = require('../helpers/validar-email')
+const verificarCaracteresEspeciais = require('../helpers/verificar-caracteres-especiais')
+const createUserToken = require('../helpers/create-user-token')
 
 module.exports = class UserController{
 
@@ -20,6 +23,11 @@ module.exports = class UserController{
             return;
         }
 
+        if(validarEmail(email) === false){
+            res.status(422).json({message: 'O email precisa ser válido!'})
+            return;
+        }
+
         if(!phone){
             res.status(422).json({message: 'O phone é obrigatório!'})
             return;
@@ -27,6 +35,16 @@ module.exports = class UserController{
 
         if(!password){
             res.status(422).json({message: 'O password é obrigatório!'})
+            return;
+        }
+
+        if(password.length < 6){
+            res.status(422).json({message: 'Password precisa ter pelo menos 6 caracters'})
+            return;
+        }
+
+        if(verificarCaracteresEspeciais(password) === false){
+            res.status(422).json({message: 'Password precisa ter caracteres especiais'})
             return;
         }
 
@@ -65,11 +83,37 @@ module.exports = class UserController{
 
             const newUser = await user.save()
 
-            res.status(201).json({message: 'Usuario salvo com sucesso'})
+            await createUserToken(newUser, req, res)
 
         }catch(error){
 
             res.status(500).json(error)
+        }
+
+    }
+
+    //metodo para fazer login
+    static async login(req, res){
+
+        const { email, password } = req.body
+
+        //validações
+        if(!email){
+            res.status(422).json({message: 'Email é obrigatório'})
+            return;
+        }
+
+        if(!password){
+            res.status(422).json({message: 'Password é obrigatório'})
+            return;
+        }
+
+        //buscar o usuario
+        const user = await User.findOne({email: email})
+
+        if(!user){
+            res.status(422).json({message: 'Usuário não encontrado'})
+            return;
         }
 
     }
