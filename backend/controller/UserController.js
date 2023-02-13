@@ -181,7 +181,41 @@ module.exports = class UserController{
 
     //edição de usuários
     static async editUser(req, res){
-        
+
+        const { id } = req.params
+
+        const { name, email, phone, password, confirmPassword } = req.body
+
+        const user = await User.findById(id)
+
+        if(!user){
+            res.status(422).json({message: 'Usuário não encontrado'})
+            return;
+        }
+
+        if(name){
+            user.name = name
+        }
+
+        if(email){
+            user.email = email
+        }
+
+        if(phone){
+            user.phone = phone
+        }
+
+        if(password && password === confirmPassword){
+            //criptografar a senha
+            const salt = await bcrypt.genSalt(12)
+            const passwordHash = await bcrypt.hash(password, salt)
+            user.password = passwordHash
+        }else{
+            res.status(422).json({message: 'Password precisa ser igual a confirmação'})
+            return;
+        }
+
+        res.send({user})
     }
 
 }
