@@ -4,6 +4,8 @@ const bcrypt = require('bcrypt')
 const validarEmail = require('../helpers/validar-email')
 const verificarCaracteresEspeciais = require('../helpers/verificar-caracteres-especiais')
 const createUserToken = require('../helpers/create-user-token')
+const getToken = require('../helpers/get-token')
+const jwt = require('jsonwebtoken')
 
 module.exports = class UserController{
 
@@ -116,6 +118,70 @@ module.exports = class UserController{
             return;
         }
 
+        //fazer a verificação da senha
+        const checkPassword = await bcrypt.compare(password, user.password)
+
+        if(!checkPassword){
+            res.status(422).json({message: 'Senha inválida'})
+            return;
+        }
+
+        //fazer o login com o token
+        await createUserToken(user, req, res)
+
+    }
+
+    //metodo para obter usuario
+    static async checkUser(req, res){
+
+        let currentUser
+
+        //verificar a autorização
+        if(req.headers.authorization){
+
+            const token = getToken(req)
+
+            //decodificar token
+            const decoded = jwt.verify(token, 'cade432mui987glick')
+
+            try{
+
+                currentUser = await User.findById(decoded.id)
+
+                currentUser.password = undefined
+            }catch(error){
+
+                res.send(error)
+            }
+
+        }else{
+
+            currentUser = null
+        }
+
+        res.status(200).send(currentUser)
+
+    }
+
+    //pegar um usuario
+    static async getUserById(req, res){
+
+        const { id } = req.params
+
+        const user = await User.findById(id).select('-password')
+
+        if(!user){
+            res.status(422).json({message: 'Usuário não encontrado'})
+            return;
+        }
+
+        res.status(200).json({user})
+
+    }
+
+    //edição de usuários
+    static async editUser(req, res){
+        
     }
 
 }
